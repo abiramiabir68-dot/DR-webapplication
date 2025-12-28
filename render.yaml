@@ -11,12 +11,20 @@ services:
         value: "3.12.10"
       - key: DEV_MODE
         value: "false"
-      - key: ALLOWED_ORIGINS
-        value: "http://localhost:3000,https://diabetic-retino-frontend.onrender.com"
-      - key: SECRET_KEY
-        generateValue: true
       - key: MODEL_FILE
         value: "best_ra_finetune_export.keras"
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:3000,https://diabetic-retino-frontend.onrender.com"
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "2"
+      - key: TF_ENABLE_ONEDNN_OPTS
+        value: "1"
+      - key: KERAS_BACKEND
+        value: "tensorflow"
+      - key: SECRET_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
 
   - type: web
     name: diabetic-retino-frontend
@@ -31,5 +39,3 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: "https://diabetic-retino-backend.onrender.com"
-
-      
