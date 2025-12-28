@@ -1,0 +1,27 @@
+*.ipynb
+*.code-workspace
+
+__pycache__/
+*.pyc
+.venv*/
+.env
+
+node_modules/
+build/
+dist/
+
+
+*.keras
+*.h5
+*.onnx
+
+
+static/uploads/
+static/gradcam/
+
+
+
+# Ignore training requirements files
+requirements_train.txt
+requirements_train.lock.txt
+
