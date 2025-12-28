@@ -3,7 +3,7 @@ services:
     name: diabetic-retino-backend
     runtime: python
     rootDir: backend/backend
-    buildCommand: git lfs pull && pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
     healthCheckPath: /api/health
     envVars:
@@ -18,11 +18,8 @@ services:
       - key: MODEL_FILE
         value: "best_ra_finetune_export.keras"
 
-
-
-  - type: web
+  - type: static
     name: diabetic-retino-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: build
