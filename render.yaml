@@ -3,7 +3,7 @@ services:
     name: diabetic-retino-backend
     runtime: python
     rootDir: backend/backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: git lfs pull && pip install -r requirements.txt
     startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
     healthCheckPath: /api/health
     envVars:
