@@ -16,7 +16,7 @@ services:
       - key: SECRET_KEY
         sync: false
       - key: MODEL_FILE
-        value: "model/best_ra_finetune_export.keras"
+        value: "best_ra_finetune_export.keras"
 
 
 
