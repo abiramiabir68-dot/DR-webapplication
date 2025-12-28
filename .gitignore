@@ -10,11 +10,9 @@ node_modules/
 build/
 dist/
 
-
 *.keras
 *.h5
 *.onnx
-
 
 
 !backend/backend/model/
@@ -29,3 +27,4 @@ backend/backend/static/gradcam/
 
 requirements_train.txt
 requirements_train.lock.txt
+
