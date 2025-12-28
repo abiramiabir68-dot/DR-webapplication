@@ -14,20 +14,22 @@ services:
       - key: ALLOWED_ORIGINS
         value: "http://localhost:3000,https://diabetic-retino-frontend.onrender.com"
       - key: SECRET_KEY
-        sync: false
+        generateValue: true
       - key: MODEL_FILE
         value: "best_ra_finetune_export.keras"
 
-      - type: web
-        name: diabetic-retino-frontend
-        runtime: static
-        rootDir: frontend
-        buildCommand: npm ci && npm run build
-        staticPublishPath: build
-        routes:
+  - type: web
+    name: diabetic-retino-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: build
+    routes:
       - type: rewrite
         source: /*
         destination: /index.html
-        envVars:
+    envVars:
       - key: REACT_APP_API_URL
         value: "https://diabetic-retino-backend.onrender.com"
+
+      
