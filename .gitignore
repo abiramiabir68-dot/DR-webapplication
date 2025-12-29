@@ -17,6 +17,6 @@ yarn-error.log*
 .vscode/
 logs/
 *.keras
-*.h5
-!backend/backend/model/best_ra_finetune_export.h5
+!backend/backend/model/best_ra_finetune_export.keras
+
 
