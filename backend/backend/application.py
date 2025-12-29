@@ -4,6 +4,7 @@ import logging
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = os.getenv("TF_CPP_MIN_LOG_LEVEL", "2")
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = os.getenv("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ["CUDA_VISIBLE_DEVICES"] = os.getenv("CUDA_VISIBLE_DEVICES", "-1")
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
@@ -149,7 +150,7 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
-
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
 
 
 
@@ -216,8 +217,6 @@ IMAGE_SIZE = (300, 300)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
-
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-this-secret-key-in-production')
 
 encryptor = get_encryptor()
@@ -229,7 +228,12 @@ os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 import builtins
 builtins.tf = tf
 
+from threading import Lock
+
 model = None
+
+PREDICT_LOCK = Lock()
+infer = None
 
 if MODEL_PATH:
     print("\n" + "="*60)
@@ -362,31 +366,12 @@ if MODEL_PATH:
         model = keras.models.load_model(MODEL_PATH, custom_objects=custom_objects, compile=False)
         print("Model architecture loaded")
 
-        gc.collect()
+        @tf.function(reduce_retracing=True)
+        def _infer(x):
+            return model(x, training=False)
 
-        print("\nCompiling model ...")
-        try:
-            
-            loss_fn = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0)
-
-            
-            optimizer = tf.keras.optimizers.AdamW(
-                learning_rate=2e-5,
-                weight_decay=1e-5,
-                epsilon=1e-7,
-                clipnorm=1.0,
-            )
-
-            model.compile(
-                optimizer=optimizer,
-                loss=loss_fn,
-                metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy")],
-            )
-        except Exception:
-            
-            model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
-        print("Model compiled")
-
+        infer = _infer
+        _ = infer(tf.zeros((1, 300, 300, 3), dtype=tf.float32))
 
         gc.collect()
 
@@ -516,23 +501,13 @@ def preprocess_image(img_bgr):
     x = np.expand_dims(x, axis=0)
     return x
 
-@app.route('/api/health', methods=['GET'])
+@app.get("/api/health")
 def health_check():
-    """Health check endpoint with security status"""
-    client_ip = get_client_ip()
-    audit_logger.log_access('system', 'HEALTH_CHECK', '/api/health', client_ip, True)
-
     return jsonify({
-        'status': 'healthy',
-        'model_loaded': model is not None,
-        'security': {
-            'encryption_enabled': True,
-            'anonymization_enabled': True,
-            'audit_logging_enabled': True,
-            'gdpr_compliant': True,
-            'pdpa_compliant': True
-        }
+        "status": "ok",
+        "model_loaded": model is not None
     }), 200
+
 
 @app.route("/predict", methods=["POST"])
 @app.route("/api/predict", methods=["POST"])
@@ -584,7 +559,15 @@ def predict():
             return jsonify({'error': 'Invalid image file'}), 400
 
         processed_image = preprocess_image(img_bgr)
-        predictions = model.predict(processed_image, verbose=0)
+
+
+        x = tf.convert_to_tensor(processed_image, dtype=tf.float32)
+
+        with PREDICT_LOCK:
+            preds = infer(x).numpy()
+
+        predictions = preds
+
 
         print(f"DEBUG - Raw predictions: {predictions[0]}")
         print(f"DEBUG - Prediction sum: {np.sum(predictions[0])}")
