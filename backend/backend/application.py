@@ -2,8 +2,8 @@ import os
 import warnings
 import logging
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = os.getenv("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = os.getenv("TF_ENABLE_ONEDNN_OPTS", "1")
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
@@ -97,13 +97,17 @@ class EfficientNetPreprocess(layers.Layer):
         return input_shape
 
 
-@tf.keras.utils.register_keras_serializable()
+@tf.keras.utils.register_keras_serializable(package="Custom")
 class EfficientNetB3Block(layers.Layer):
-    """Custom layer wrapping EfficientNetB3 - must match training notebook exactly"""
-    def __init__(self, input_shape=(300, 300, 3), trainable_base=False, weights="imagenet", **kwargs):
+    """Custom layer wrapping EfficientNetB3 - prevents remote download at load-time"""
+    def __init__(self, input_shape=(300, 300, 3), trainable_base=False, weights=None, **kwargs):
         super().__init__(**kwargs)
         self.input_shape_ = tuple(input_shape)
         self.trainable_base = bool(trainable_base)
+
+        
+        if weights in ("imagenet", "noisy-student"):
+            weights = None
         self.weights_ = weights
 
         self.base = tf.keras.applications.EfficientNetB3(
@@ -124,6 +128,14 @@ class EfficientNetB3Block(layers.Layer):
             "weights": self.weights_,
         })
         return config
+
+    @classmethod
+    def from_config(cls, config):
+        w = config.get("weights", None)
+        if w in ("imagenet", "noisy-student"):
+            config["weights"] = None
+        return cls(**config)
+
 
 
 from utils.encryption import get_encryptor
@@ -162,37 +174,21 @@ DEV_MODE = os.getenv('DEV_MODE', 'false').strip().lower() == 'true'
 
 MODEL_FILE = os.getenv("MODEL_FILE", "").strip()
 
-MODEL_CANDIDATES = []
 
-if MODEL_FILE:
-    MODEL_CANDIDATES += [
-        os.path.join(BASE_DIR, "model", MODEL_FILE),
-        os.path.join(BASE_DIR, MODEL_FILE),
-        os.path.join(BASE_DIR, "..", "model", MODEL_FILE),
-    ]
-
-MODEL_CANDIDATES += [
-    os.path.join(BASE_DIR, "model", "best_ra_finetune_export.h5"),
-    os.path.join(BASE_DIR, "best_ra_finetune_export.h5"),
-    os.path.join(BASE_DIR, "model", "best_ra_finetune.keras"),
-    os.path.join(BASE_DIR, "model", "best_ra_baseline_export.keras"),
-    os.path.join(BASE_DIR, "model", "best_ra_baseline.keras"),
-
-    os.path.join(BASE_DIR, "best_ra_finetune_export.keras"),
-    os.path.join(BASE_DIR, "best_ra_finetune.keras"),
-    os.path.join(BASE_DIR, "best_ra_baseline_export.keras"),
-    os.path.join(BASE_DIR, "best_ra_baseline.keras"),
-
-    os.path.join(BASE_DIR, "Fine-tuned_model.keras"),
-    os.path.join(BASE_DIR, "baseline_model.keras"),
-    os.path.join(BASE_DIR, "model", "Fine-tuned_model.keras"),
-    os.path.join(BASE_DIR, "model", "baseline_model.keras"),
-]
+if not MODEL_FILE:
+    MODEL_FILE = "best_ra_finetune_export.keras"
 
 MODEL_PATH = None
-for path in MODEL_CANDIDATES:
-    if os.path.exists(path):
-        MODEL_PATH = path
+
+
+CANDIDATES = [
+    os.path.join(BASE_DIR, "model", MODEL_FILE),  
+    os.path.join(BASE_DIR, MODEL_FILE),           
+]
+
+for p in CANDIDATES:
+    if os.path.exists(p):
+        MODEL_PATH = p
         print(f" Found model: {MODEL_PATH}")
         break
 
@@ -200,32 +196,18 @@ if MODEL_PATH is None:
     print("\n" + "="*60)
     print(" WARNING: Model file not found!")
     print("="*60)
-    print("Searched in the following locations:")
-    for path in MODEL_CANDIDATES:
-        exists = " EXISTS" if os.path.exists(path) else "✗ NOT FOUND"
-        print(f"  {exists}: {path}")
-
+    print(f"MODEL_FILE = {MODEL_FILE}")
+    print("Searched:")
+    for p in CANDIDATES:
+        print(f"  - {p}")
     print(f"\nCurrent working directory: {os.getcwd()}")
-    print(f"Directory contents:")
-    for item in os.listdir('.'):
-        item_type = "DIR" if os.path.isdir(item) else "FILE"
-        print(f"  [{item_type}] {item}")
+    print("="*60 + "\n")
 
     if not DEV_MODE:
-        print("\n" + "="*60)
-        print("SOLUTION OPTIONS:")
-        print("  1. Copy your model file (.keras) to this directory:")
-        print(f"     {os.getcwd()}")
-        print("\n  2. Or run in development mode (no model needed):")
-        print("     Set environment variable: DEV_MODE=true")
-        print("     PowerShell: $env:DEV_MODE='true'; python app.py")
-        print("="*60 + "\n")
         exit(1)
-    else:
-        print("\n" + "="*60)
-        print(" DEVELOPMENT MODE: Running without model")
-        print("   Prediction endpoints will return mock data")
-        print("="*60 + "\n")
+
+    print(" DEVELOPMENT MODE: Running without model\n")
+
 
 IMAGE_SIZE = (300, 300)
 
