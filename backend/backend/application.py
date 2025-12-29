@@ -150,6 +150,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
+
+
 ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
