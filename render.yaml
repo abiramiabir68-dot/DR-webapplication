@@ -16,7 +16,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: MODEL_FILE
-        value: "best_ra_finetune_export.keras"
+        value: "best_ra_finetune_export.h5"
 
   - type: web
     name: diabetic-retino-frontend
