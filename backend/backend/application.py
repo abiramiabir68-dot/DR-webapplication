@@ -138,8 +138,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
-ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
-CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
+
+@app.get("/")
+def root():
+    return jsonify({
+        "status": "ok",
+        "endpoints": ["/api/health", "/api/predict", "/api/model-info"]
+    }), 200
 
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -160,7 +172,8 @@ if MODEL_FILE:
     ]
 
 MODEL_CANDIDATES += [
-    os.path.join(BASE_DIR, "model", "best_ra_finetune_export.keras"),
+    os.path.join(BASE_DIR, "model", "best_ra_finetune_export.h5"),
+    os.path.join(BASE_DIR, "best_ra_finetune_export.h5"),
     os.path.join(BASE_DIR, "model", "best_ra_finetune.keras"),
     os.path.join(BASE_DIR, "model", "best_ra_baseline_export.keras"),
     os.path.join(BASE_DIR, "model", "best_ra_baseline.keras"),
@@ -536,9 +549,10 @@ def health_check():
         }
     }), 200
 
-@app.route('/api/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
+@app.route("/api/predict", methods=["POST"])
 def predict():
-    """Predict diabetic retinopathy from uploaded image with security features"""
+
     client_ip = get_client_ip()
     session_id = None
     anonymized_id = None
