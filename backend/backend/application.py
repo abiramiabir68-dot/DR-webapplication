@@ -150,7 +150,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
+
 
 
 ALLOWED_ORIGINS = [
@@ -216,7 +216,7 @@ IMAGE_SIZE = (300, 300)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-this-secret-key-in-production')
 
