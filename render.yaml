@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: diabetic-retino-backend
+    runtime: python
+    rootDir: backend/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: DEV_MODE
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:3000,https://diabetic-retino-frontend.onrender.com"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MODEL_FILE
+        value: "best_ra_finetune_export.keras"
+
+  - type: web
+    name: diabetic-retino-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        value: "https://diabetic-retino-backend.onrender.com"
+
+      
