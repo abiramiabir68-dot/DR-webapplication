@@ -3,7 +3,7 @@ import warnings
 import logging
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = os.getenv("TF_CPP_MIN_LOG_LEVEL", "2")
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = os.getenv("TF_ENABLE_ONEDNN_OPTS", "1")
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = os.getenv("TF_ENABLE_ONEDNN_OPTS", "0")
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
