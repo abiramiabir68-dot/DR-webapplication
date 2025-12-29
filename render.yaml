@@ -4,7 +4,7 @@ services:
     runtime: python
     rootDir: backend/backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
+    startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 300 --keep-alive 60
     healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
@@ -17,6 +17,10 @@ services:
         generateValue: true
       - key: MODEL_FILE
         value: "best_ra_finetune_export.keras"
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "2"
+      - key: TF_ENABLE_ONEDNN_OPTS
+        value: "0"
 
   - type: web
     name: diabetic-retino-frontend
@@ -31,5 +35,3 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: "https://diabetic-retino-backend-n1gt.onrender.com"
-
-      
