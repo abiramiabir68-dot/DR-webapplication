@@ -2,7 +2,6 @@ services:
   - type: web
     name: diabetic-retino-backend
     runtime: python
-    region: singapore 
     plan: standard
     rootDir: backend/backend
     buildCommand: pip install -r requirements.txt
