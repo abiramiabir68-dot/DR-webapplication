@@ -13,7 +13,7 @@ services:
       - key: DEV_MODE
         value: "false"
       - key: ALLOWED_ORIGINS
-        value: "https://diabetic-retino-frontend-n1gt.onrender.com,http://localhost:3000"
+        value: "https://diabetic-retino-frontend.onrender.com,http://localhost:3000"
       - key: SECRET_KEY
         generateValue: true
       - key: MODEL_FILE
@@ -35,4 +35,4 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_URL
-        value: "https://diabetic-retino-backend-n1gt.onrender.com"
+        value: "https://diabetic-retino-backend.onrender.com"
