@@ -23,16 +23,4 @@ services:
       - key: TF_ENABLE_ONEDNN_OPTS
         value: "0"
 
-  - type: web
-    name: diabetic-retino-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: build
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: REACT_APP_API_URL
-        value: "https://diabetic-retino-backend.onrender.com"
+  
