@@ -8,6 +8,13 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
     healthCheckPath: /api/health
+
+    
+    buildFilter:
+      paths:
+        - backend/**
+        - frontend/**
+
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
@@ -40,6 +47,13 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+    
+    buildFilter:
+      paths:
+        - backend/**
+        - frontend/**
+
     envVars:
       - key: REACT_APP_API_URL
         fromService:
