@@ -1,7 +1,9 @@
 services:
   - type: web
-    name: diabetic-retino-backend
+    name: diabetic-retino-backend-si
     runtime: python
+    region: singapore 
+    plan: standard   
     rootDir: backend/backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
@@ -18,13 +20,15 @@ services:
       - key: TF_CPP_MIN_LOG_LEVEL
         value: "2"
       - key: TF_ENABLE_ONEDNN_OPTS
-        value: "1"
+        value: "0"
+      - key: CUDA_VISIBLE_DEVICES
+        value: "-1"
       - key: KERAS_BACKEND
         value: "tensorflow"
       - key: SECRET_KEY
-        sync: false
+        sync: True
       - key: ENCRYPTION_KEY
-        sync: false
+        sync: True
 
   - type: web
     name: diabetic-retino-frontend
