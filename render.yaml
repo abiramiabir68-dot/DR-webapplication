@@ -26,9 +26,9 @@ services:
       - key: KERAS_BACKEND
         value: "tensorflow"
       - key: SECRET_KEY
-        sync: true
+        sync: false
       - key: ENCRYPTION_KEY
-        sync: true
+        sync: false
 
   - type: web
     name: diabetic-retino-frontend
