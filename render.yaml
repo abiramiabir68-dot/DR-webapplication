@@ -2,18 +2,10 @@ services:
   - type: web
     name: diabetic-retino-backend-sing
     runtime: python
-    region: singapore
-    plan: standard
     rootDir: backend/backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn application:app --bind 0.0.0.0:$PORT --timeout 300
     healthCheckPath: /api/health
-
-    buildFilter:
-      paths:
-        - render.yaml
-        - backend/**
-
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
@@ -22,39 +14,20 @@ services:
       - key: MODEL_FILE
         value: "best_ra_finetune_export.keras"
       - key: ALLOWED_ORIGINS
-        value: "http://localhost:3000,https://diabetic-retino-frontend.onrender.com"
+        value: "http://localhost:3000,https://diabetic-retino-frontend-i4dj.onrender.com"
       - key: TF_CPP_MIN_LOG_LEVEL
         value: "2"
       - key: TF_ENABLE_ONEDNN_OPTS
         value: "0"
       - key: CUDA_VISIBLE_DEVICES
         value: "-1"
-      - key: KERAS_BACKEND
-        value: "tensorflow"
-      - key: SECRET_KEY
-        sync: false
-      - key: ENCRYPTION_KEY
-        sync: false
 
   - type: web
-    name: diabetic-retino-frontend
+    name: diabetic-retino-frontend-i4dj
     runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: build
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-    buildFilter:
-      paths:
-        - render.yaml
-        - frontend/**
-
     envVars:
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: diabetic-retino-backend-sing
-          envVarKey: RENDER_EXTERNAL_URL
+        value: "https://diabetic-retino-backend-sing-i4dj.onrender.com"
