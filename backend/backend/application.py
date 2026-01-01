@@ -153,14 +153,17 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  
 
 
+raw = os.getenv("ALLOWED_ORIGINS", "").strip()
 
-ALLOWED_ORIGINS = [
-    o.strip()
-    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-    if o.strip()
-]
+if raw == "*" or raw.lower() == "all":
+    origins = "*"
+else:
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
 
-CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
+
+CORS(app, resources={r"/api/*": {"origins": origins}})
+
+
 
 @app.get("/")
 def root():

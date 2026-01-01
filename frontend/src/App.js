@@ -81,17 +81,67 @@ function normalizeApiResponse(data) {
 }
 
 function App() {
-  var _a = useState(null), selectedFile = _a[0], setSelectedFile = _a[1];
-  var _b = useState(null), preview = _b[0], setPreview = _b[1];
-  var _c = useState(null), prediction = _c[0], setPrediction = _c[1];
-  var _d = useState(false), loading = _d[0], setLoading = _d[1];
-  var _e = useState(null), error = _e[0], setError = _e[1];
+  var _a = useState(null),
+    selectedFile = _a[0],
+    setSelectedFile = _a[1];
+  var _b = useState(null),
+    preview = _b[0],
+    setPreview = _b[1];
+  var _c = useState(null),
+    prediction = _c[0],
+    setPrediction = _c[1];
+  var _d = useState(false),
+    loading = _d[0],
+    setLoading = _d[1];
+  var _e = useState(null),
+    error = _e[0],
+    setError = _e[1];
+
+  var _f = useState({ state: 'checking', details: null }),
+    backendHealth = _f[0],
+    setBackendHealth = _f[1];
+
+  useEffect(
+    function () {
+      return function () {
+        if (preview) URL.revokeObjectURL(preview);
+      };
+    },
+    [preview]
+  );
 
   useEffect(function () {
+    if (process.env.NODE_ENV !== 'development' && !API_URL) {
+      setBackendHealth({ state: 'missing_api_url', details: null });
+      return;
+    }
+
+    if (!API_URL) {
+      setBackendHealth({ state: 'unknown', details: null });
+      return;
+    }
+
+    var controller = new AbortController();
+
+    fetch(API_URL + '/api/health', { signal: controller.signal })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        setBackendHealth({ state: 'ok', details: data });
+        console.log('Backend health:', data);
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        setBackendHealth({ state: 'error', details: String(err) });
+        console.error('Health check failed:', err);
+      });
+
     return function () {
-      if (preview) URL.revokeObjectURL(preview);
+      controller.abort();
     };
-  }, [preview]);
+  }, []);
 
   var onDrop = useCallback(function (acceptedFiles) {
     var file = acceptedFiles && acceptedFiles[0];
@@ -159,7 +209,6 @@ function App() {
       if (serverMsg) msg = serverMsg;
 
       setError(msg);
-      // eslint-disable-next-line no-console
       console.error('Error:', err);
     } finally {
       setLoading(false);
@@ -203,6 +252,37 @@ function App() {
     return (b[1] || 0) - (a[1] || 0);
   });
 
+  var backendBanner = null;
+  if (process.env.NODE_ENV !== 'development') {
+    if (backendHealth.state === 'missing_api_url') {
+      backendBanner = (
+        <Alert variant="warning" className="alert-modern">
+          <strong>Backend not configured:</strong> Set <code>REACT_APP_API_URL</code> in the Render Frontend service
+          Environment to your backend URL (example: <code>https://your-backend.onrender.com</code>) and redeploy the
+          frontend.
+        </Alert>
+      );
+    } else if (backendHealth.state === 'checking') {
+      backendBanner = (
+        <Alert variant="secondary" className="alert-modern">
+          Checking backend connection...
+        </Alert>
+      );
+    } else if (backendHealth.state === 'ok') {
+      backendBanner = (
+        <Alert variant="success" className="alert-modern">
+          Backend connected successfully.
+        </Alert>
+      );
+    } else if (backendHealth.state === 'error') {
+      backendBanner = (
+        <Alert variant="danger" className="alert-modern">
+          <strong>Backend connection failed:</strong> {backendHealth.details || 'Unknown error'}
+        </Alert>
+      );
+    }
+  }
+
   var errorAlert = null;
   if (error) {
     errorAlert = (
@@ -235,10 +315,7 @@ function App() {
   }
 
   var uploadSection = (
-    <div
-      {...dropzone.getRootProps()}
-      className={'dropzone-modern ' + (dropzone.isDragActive ? 'active' : '')}
-    >
+    <div {...dropzone.getRootProps()} className={'dropzone-modern ' + (dropzone.isDragActive ? 'active' : '')}>
       <input {...dropzone.getInputProps()} />
       <div className="dropzone-content">
         <FaUpload className="upload-icon" />
@@ -255,23 +332,11 @@ function App() {
         <img src={preview} alt="Preview" className="preview-image-modern" />
 
         <div className="button-group mt-4">
-          <Button
-            variant="primary"
-            size="lg"
-            className="btn-modern btn-analyze"
-            onClick={handleAnalyze}
-            disabled={loading}
-          >
+          <Button variant="primary" size="lg" className="btn-modern btn-analyze" onClick={handleAnalyze} disabled={loading}>
             {analyzeBtnContent}
           </Button>
 
-          <Button
-            variant="outline-light"
-            size="lg"
-            className="btn-modern"
-            onClick={handleClear}
-            disabled={loading}
-          >
+          <Button variant="outline-light" size="lg" className="btn-modern" onClick={handleClear} disabled={loading}>
             Upload New
           </Button>
         </div>
@@ -315,9 +380,7 @@ function App() {
   );
 
   if (prediction) {
-    var probSectionBody = (
-      <p className="text-muted mb-0">No probability distribution returned by the server.</p>
-    );
+    var probSectionBody = <p className="text-muted mb-0">No probability distribution returned by the server.</p>;
 
     if (probEntries.length !== 0) {
       probSectionBody = (
@@ -404,6 +467,7 @@ function App() {
       </div>
 
       <Container className="mt-4">
+        {backendBanner}
         {errorAlert}
 
         <Row className="g-4">
