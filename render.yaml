@@ -39,7 +39,6 @@ services:
   - type: web
     name: diabetic-retino-frontend
     runtime: static
-    region: singapore
     plan: standard
     rootDir: frontend
     buildCommand: npm ci && npm run build
