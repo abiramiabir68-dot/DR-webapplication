@@ -24,9 +24,9 @@ services:
       - key: CUDA_VISIBLE_DEVICES
         value: "-1"
       - key: SECRET_KEY
-        sync: "false"
+        sync: false
       - key: ENCRYPTION_KEY
-        sync: "false"
+        sync: false
 
   - type: web
     name: diabetic-retino-frontend-i4dj
