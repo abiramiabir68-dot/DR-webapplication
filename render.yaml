@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: diabetic-retino-backend-sing
+    name: diabetic-retino-backend-singa
     runtime: python
     region: singapore
     plan: standard
@@ -23,6 +23,10 @@ services:
         value: "0"
       - key: CUDA_VISIBLE_DEVICES
         value: "-1"
+      - key: SECRET_KEY
+        generateValue: "true"
+      - key: ENCRYPTION_KEY
+        generateValue: "true"
 
   - type: web
     name: diabetic-retino-frontend-i4dj
@@ -33,6 +37,6 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         fromService:
-          name: diabetic-retino-backend-sing
+          name: diabetic-retino-backend-singa
           type: web
           envVarKey: RENDER_EXTERNAL_URL
